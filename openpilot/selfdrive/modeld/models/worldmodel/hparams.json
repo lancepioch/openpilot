@@ -1,0 +1,2699 @@
+{
+  "activation_checkpoint": {
+    "debug": false,
+    "determinism_check": "default",
+    "preserve_rng_state": true
+  },
+  "checkpoint": {
+    "allow_partial_initial_load": false,
+    "async_mode": "async",
+    "checkpoint_id_format": "",
+    "create_seed_checkpoint": false,
+    "enable": true,
+    "enable_first_step_checkpoint": true,
+    "exclude_from_loading": [
+      "optimizer",
+      "lr_scheduler",
+      "dataloader",
+      "train_state"
+    ],
+    "export_dtype": "float32",
+    "export_torch_package": true,
+    "folder": "mkv://data-gen.comma.life:3080/reporterv2/checkpoint/ff14e594-2315-4a7a-875a-541fd2e7c514",
+    "initial_load_in_hf": false,
+    "initial_load_in_hf_quantized": false,
+    "initial_load_model_only": true,
+    "initial_load_path": null,
+    "interval": 1920,
+    "keep_latest_k": 0,
+    "last_save_in_hf": false,
+    "last_save_model_only": false,
+    "load_only": false,
+    "load_step": -1,
+    "torch_package_async": true,
+    "torch_package_max_concurrent": 1,
+    "torch_package_recipe": "torchtitan.experiments.worldmodel.torchpackage_checkpoint:WorldModelTrainingTorchPackageRecipe",
+    "torch_package_recipe_state_file": "_torchpackage_model_config.pt",
+    "torch_package_structured_log_dir": "/var/log/slurm/worldmodel-context9-unconditioned-ff14e594-2315-4a7a-875a-541fd2e7c514/packages",
+    "torch_package_wait_on_close": true
+  },
+  "codedir": "/code.nfs/branches/caches/tinytower-haraschax_2026-09-17_18-20-14/xx",
+  "comm": {
+    "init_timeout_seconds": 1800,
+    "mode": "default",
+    "save_traces_file_prefix": "rank_",
+    "save_traces_folder": "comm_traces",
+    "trace_buf_size": 20000,
+    "train_timeout_seconds": 100
+  },
+  "compile": {
+    "backend": "inductor",
+    "components": [
+      "model",
+      "loss"
+    ],
+    "enable": true
+  },
+  "dataloader": {
+    "base_dir": "http://data-ssd.comma.life/runner/training_2026_02",
+    "compressor_model": "c04337f8-b83f-4e34-b07a-5f7396978d67",
+    "context_size_frames": 9,
+    "dataset": "/code.nfs/branches/caches/tinytower-haraschax_2026-09-17_18-20-14/xx/comma_data/lists/train_10m_20260826.txt",
+    "dataset_path": null,
+    "feature_dir": null,
+    "fill_once": false,
+    "fps": 5,
+    "future_size_frames": 0,
+    "image_size": [
+      128,
+      256
+    ],
+    "in_channels": 32,
+    "inference_prefill_frames": 8,
+    "latent_size": [
+      16,
+      32
+    ],
+    "limit": null,
+    "max_future_frames": 50,
+    "min_mixing": 0.5,
+    "mock_data": false,
+    "mock_segment_batch_size": 8,
+    "nan_engaged_plans": false,
+    "num_readers": 4,
+    "num_writers": 2,
+    "shuffle_size": 25000,
+    "split": "train",
+    "train_skip": 40,
+    "val_skip": 800
+  },
+  "debug": {
+    "batch_invariant": false,
+    "detect_anomaly": false,
+    "deterministic": false,
+    "deterministic_warn_only": false,
+    "enable_structured_logging": true,
+    "moe_force_load_balance": false,
+    "print_config": false,
+    "save_config_file": null,
+    "seed": 0,
+    "spmd_typechecking": false
+  },
+  "dump_folder": "/var/log/slurm/worldmodel-context9-unconditioned-ff14e594-2315-4a7a-875a-541fd2e7c514/traces",
+  "enable_rollout_report": false,
+  "fake_timesteps_prob": 0.5,
+  "float8": {
+    "emulate": false,
+    "enable": true
+  },
+  "hf_assets_path": ".",
+  "loss": {
+    "plan_loss_weight": 0.1
+  },
+  "lr_scheduler": {
+    "decay_ratio": 0.1,
+    "decay_type": "cosine",
+    "min_lr_factor": 0.0,
+    "total_steps": 15360,
+    "warmup_steps": 1024
+  },
+  "metrics": {
+    "disable_color_printing": false,
+    "enable_reporterv2": true,
+    "enable_tensorboard": false,
+    "enable_wandb": false,
+    "log_freq": 16,
+    "save_for_all_ranks": false,
+    "save_freq": 512,
+    "save_tb_folder": "tb"
+  },
+  "model": {
+    "augments_pos_ref_augment_embedder": {
+      "mlp_in": {
+        "bias": true,
+        "in_features": 3,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "mlp_out": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t2": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 4608,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t6": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 13824,
+        "param_init": null,
+        "sharding_config": null
+      }
+    },
+    "blocks": [
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      },
+      {
+        "attn": {
+          "c_attn": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 6912,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        },
+        "mlp": {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 9216,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 9216,
+            "out_features": 2304,
+            "param_init": null,
+            "precompute_float8_dynamic_scale_for_fsdp": true,
+            "sharding_config": null
+          }
+        }
+      }
+    ],
+    "compressor_mean": 0.001418,
+    "compressor_std": 0.112629,
+    "experimental_pose_only_xy": false,
+    "fidx_embedder": {
+      "mlp_in": {
+        "bias": true,
+        "in_features": 50,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "mlp_out": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t2": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 4608,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t6": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 13824,
+        "param_init": null,
+        "sharding_config": null
+      }
+    },
+    "final_layer": {
+      "linear": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 128,
+        "param_init": null,
+        "sharding_config": null
+      }
+    },
+    "in_channels": 32,
+    "input_size": [
+      9,
+      16,
+      32
+    ],
+    "out_channels": 32,
+    "param_init": null,
+    "patch_size": [
+      1,
+      2,
+      2
+    ],
+    "plan_head": {
+      "act": "GELU",
+      "attention_impl": "FLEX",
+      "attention_mask": "BLOCKWISE_LOWER_TRIANGLE",
+      "attention_mask_mini_block_size": null,
+      "attn_pdrop": 0.0,
+      "biased_linears": true,
+      "block_size": 0,
+      "mlp_mult": 2,
+      "mlp_multiple_of": 1,
+      "n_embd": 2304,
+      "n_head": 36,
+      "n_layer": 4,
+      "norm": "LayerNorm",
+      "prenorm": true,
+      "qk_norm": false,
+      "resid_pdrop": 0.0
+    },
+    "plan_head_linears": {
+      "blocks": [
+        {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 4608,
+            "param_init": null,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 4608,
+            "out_features": 2304,
+            "param_init": null,
+            "sharding_config": null
+          }
+        },
+        {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 4608,
+            "param_init": null,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 4608,
+            "out_features": 2304,
+            "param_init": null,
+            "sharding_config": null
+          }
+        },
+        {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 4608,
+            "param_init": null,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 4608,
+            "out_features": 2304,
+            "param_init": null,
+            "sharding_config": null
+          }
+        },
+        {
+          "c_fc": {
+            "bias": true,
+            "in_features": 2304,
+            "out_features": 4608,
+            "param_init": null,
+            "sharding_config": null
+          },
+          "c_proj": {
+            "bias": true,
+            "in_features": 4608,
+            "out_features": 2304,
+            "param_init": null,
+            "sharding_config": null
+          }
+        }
+      ],
+      "head": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 990,
+        "param_init": null,
+        "sharding_config": null
+      }
+    },
+    "pose_mask_embedder": {
+      "mlp_in": {
+        "bias": true,
+        "in_features": 2,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "mlp_out": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t2": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 4608,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t6": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 13824,
+        "param_init": null,
+        "sharding_config": null
+      }
+    },
+    "pose_size": 6,
+    "ref_augment_from_augments_euler_embedder": {
+      "mlp_in": {
+        "bias": true,
+        "in_features": 3,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "mlp_out": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t2": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 4608,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t6": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 13824,
+        "param_init": null,
+        "sharding_config": null
+      }
+    },
+    "sharding_config": null,
+    "t_embedder": {
+      "mlp_in": {
+        "bias": true,
+        "in_features": 256,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "mlp_out": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t2": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 4608,
+        "param_init": null,
+        "sharding_config": null
+      },
+      "to_t6": {
+        "bias": true,
+        "in_features": 2304,
+        "out_features": 13824,
+        "param_init": null,
+        "sharding_config": null
+      }
+    },
+    "time_factor": 1.0,
+    "transformer": {
+      "act": "GELU",
+      "attention_impl": "FLEX",
+      "attention_mask": "BLOCKWISE_LOWER_TRIANGLE",
+      "attention_mask_mini_block_size": 128,
+      "attn_pdrop": 0.0,
+      "biased_linears": true,
+      "block_size": 1152,
+      "mlp_mult": 4,
+      "mlp_multiple_of": 256,
+      "n_embd": 2304,
+      "n_head": 36,
+      "n_layer": 56,
+      "norm": "RMSNorm",
+      "prenorm": false,
+      "qk_norm": true,
+      "resid_pdrop": 0.0
+    },
+    "x_embedder": {
+      "linear": {
+        "bias": false,
+        "in_features": 128,
+        "out_features": 2304,
+        "param_init": null,
+        "sharding_config": null
+      }
+    }
+  },
+  "model_spec": {
+    "flavor": "base",
+    "name": "worldmodel"
+  },
+  "no_noise_prefill_frames_prob": 0.5,
+  "noise_scheduler_steps": 10,
+  "optimizer": {
+    "implementation": "fused_opt_states_bf16",
+    "param_groups": [
+      {
+        "optimizer_kwargs": {
+          "betas": [
+            0.9,
+            0.95
+          ],
+          "eps": 1e-08,
+          "lr": 0.0002,
+          "weight_decay": 0.01
+        },
+        "optimizer_name": "AdamW",
+        "pattern": ".*"
+      }
+    ]
+  },
+  "override": {
+    "imports": []
+  },
+  "parallelism": {
+    "context_parallel_degree": 1,
+    "context_parallel_load_balancer": "headtail",
+    "data_parallel_replicate_degree": 4,
+    "data_parallel_shard_degree": 8,
+    "enable_async_tensor_parallel": false,
+    "enable_fsdp_symm_mem": false,
+    "enable_sequence_parallel": false,
+    "expert_parallel_degree": 1,
+    "fsdp_reshard_after_forward": "default",
+    "module_fqns_per_model_part": null,
+    "pipeline_parallel_degree": 1,
+    "pipeline_parallel_first_stage_less_layers": 1,
+    "pipeline_parallel_last_stage_less_layers": 1,
+    "pipeline_parallel_layers_per_stage": null,
+    "pipeline_parallel_microbatch_size": 1,
+    "pipeline_parallel_schedule": "1F1B",
+    "pipeline_parallel_schedule_csv": "",
+    "spmd_backend": "default",
+    "tensor_parallel_degree": 1
+  },
+  "pose_dropout": 1.0,
+  "prefill_noise_prob": 0.0,
+  "profiler": {
+    "enable_memory_snapshot": false,
+    "enable_profiling": false,
+    "memory_snapshot_max_entries": 1000000,
+    "profile_freq": 10,
+    "profiler_active": 1,
+    "profiler_repeat": null,
+    "profiler_skip_first": null,
+    "profiler_skip_first_wait": null,
+    "profiler_warmup": 3,
+    "save_memory_snapshot_folder": "profiling/memory_snapshot",
+    "save_traces_folder": "profiling/traces",
+    "trace_post_processor": null
+  },
+  "reporterv2_host": "mkv://data-gen.comma.life:3080/reporterv2",
+  "tokenizer": {
+    "compressor_in_channels": "auto",
+    "compressor_model": "c04337f8-b83f-4e34-b07a-5f7396978d67"
+  },
+  "trainer": "worldmodel",
+  "training": {
+    "dtype": "float32",
+    "enable_cpu_offload": false,
+    "gc_debug": false,
+    "gc_freq": 50,
+    "global_batch_size": 1024,
+    "local_batch_size": 16,
+    "max_norm": 1.0,
+    "mixed_precision_param": "bfloat16",
+    "mixed_precision_reduce": "float32",
+    "seq_len": 1152,
+    "steps": 15360
+  },
+  "training_id": "ff14e594-2315-4a7a-875a-541fd2e7c514",
+  "validator": {
+    "dataloader": {
+      "base_dir": "http://data-ssd.comma.life/runner/training_2026_02",
+      "compressor_model": "c04337f8-b83f-4e34-b07a-5f7396978d67",
+      "context_size_frames": 9,
+      "dataset": "/code.nfs/branches/caches/tinytower-haraschax_2026-09-17_18-20-14/xx/comma_data/lists/train_10m_20260826.txt",
+      "dataset_path": null,
+      "feature_dir": null,
+      "fill_once": true,
+      "fps": 5,
+      "future_size_frames": 0,
+      "image_size": [
+        128,
+        256
+      ],
+      "in_channels": 32,
+      "inference_prefill_frames": 8,
+      "latent_size": [
+        16,
+        32
+      ],
+      "limit": null,
+      "max_future_frames": 50,
+      "min_mixing": 0.5,
+      "mock_data": false,
+      "mock_segment_batch_size": 8,
+      "nan_engaged_plans": false,
+      "num_readers": 4,
+      "num_writers": 2,
+      "shuffle_size": 50000,
+      "split": "val",
+      "train_skip": 40,
+      "val_skip": 800
+    },
+    "enable": true,
+    "fake_timesteps_prob": 0.0,
+    "freq": 512,
+    "no_noise_prefill_frames_prob": 0.0,
+    "noise_scheduler_steps": 10,
+    "pose_dropout": 1.0,
+    "steps": 8
+  },
+  "openpilot_export": {
+    "format": "context9_fp8",
+    "rldriving": "6c83ecad-0725-47be-88c0-514d218a6afb/12864",
+    "backbone": "ff14e594-2315-4a7a-875a-541fd2e7c514/15360",
+    "encoder": "c04337f8-b83f-4e34-b07a-5f7396978d67/-1",
+    "fps": 5,
+    "live_frames": 9,
+    "prefix_frames": 0,
+    "matrix_weights": {
+      "worldmodel": "float8_e4m3fn",
+      "encoder": "int8"
+    }
+  }
+}
