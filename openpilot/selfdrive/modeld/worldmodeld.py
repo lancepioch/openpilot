@@ -3,6 +3,7 @@ import gc
 import json
 import os
 os.environ['GMMU'] = '0'
+os.environ.setdefault('AM_POWER_LIMIT', '80')
 import time
 from functools import lru_cache, partial
 from pathlib import Path

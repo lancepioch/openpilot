@@ -41,6 +41,12 @@ The runtime uses LLVM, automatic GPU clocks, and
 `TC_OPT=2 TC_MIN_GLOBALS=32 JIT_BATCH_SIZE=0`. It needs a working USB AMD gfx1200 or
 gfx1201 GPU and an LLVM library with RDNA4 support.
 
+The planner defaults `AM_POWER_LIMIT` to 80 W before GPU initialization. The test
+setup uses one 100 W, 12 V supply for both the GPU and bridge; default-power runs
+reported 109--110 W for the GPU alone. The cap leaves allowance for the bridge
+and supply headroom. An explicit `AM_POWER_LIMIT` setting overrides the default
+for a different power setup.
+
 ## Model and timing
 
 Each input combines narrow and wide RGB images at 256 x 128. The encoder produces
@@ -87,10 +93,21 @@ A separate 600-frame trial kept the 132 W cap and lowered the external PCIe link
 from Gen3 x2 to Gen2 x2. It passed at 210.53 ms median and 214.72 ms maximum, with
 routing retained. The original target speed was restored, renegotiating Gen3 x2.
 These passing trials lasted only 2.5 minutes each and do not establish sustained
-reliability. Neither power nor link-speed mitigation is enabled by default.
+reliability. Link speed is unchanged; the planner now defaults to an 80 W power
+cap following confirmation of the shared 100 W supply.
 
-Timings include two-camera preprocessing, USB input, encoder, history, backbone,
-actor and plan download, but exclude startup and concurrent openpilot operation.
+At 80 W and the normal Gen3 x2 link, 1,200 frames passed over five minutes with
+PCIe routing intact: 244.05 ms median and 249.17 ms maximum. Every sampled
+inference-period board-power reading was 79 W; the highest sampled hotspot and
+memory temperatures were 69 C and 82 C. This leaves very little of the 250 ms
+budget for camera preprocessing and concurrent work, so full-stack 4 Hz remains
+unvalidated. The power budget mismatch is the leading reset hypothesis; supply
+voltage droop has not been measured independently.
+
+The earlier camera-to-plan timings include two-camera preprocessing, USB input,
+encoder, history, backbone, actor and plan download. Power and link-speed trials
+start with prepared synthetic images and exclude camera preprocessing. All these
+measurements exclude startup and concurrent openpilot operation.
 JIT replay matches eager execution, and ten saved plans match the earlier runtime
 bit-for-bit. Raw-plan error versus the original BF16 pipeline was 5.72% relative L2
 on that synthetic history; that is a diagnostic, not a driving-quality metric.
