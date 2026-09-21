@@ -33,8 +33,8 @@ python -m openpilot.selfdrive.modeld.worldmodeld
 ```
 
 The tinygrad submodule includes native RDNA4 FP8 support and synchronous USB uploads.
-It checks USB transfer results and byte counts, rejects further submissions after
-a transfer error, bounds USB completion waits, and skips GPU teardown after a
+It checks USB transfer results and byte counts, rejects submissions and waits on
+failed devices, bounds USB completion waits, and skips GPU teardown after a
 latched transfer failure. These checks prevent stale output and unlimited polling;
 they do not fix the observed PCIe configuration loss.
 The runtime uses LLVM, automatic GPU clocks, and
@@ -68,8 +68,26 @@ On the earlier runtime revision, 600 synthetic camera-to-plan calls at 4 Hz took
 390 completed calls had a 207.32 ms median and 208.34 ms p95, with one 10.01-second
 pause before the run stalled in a USB/GPU copy-completion wait. A native trace showed the completion flag at zero
 while the host waited for one. Both persistent-buffer and standard input uploads
-exhibited the stall, even with synchronous USB uploads. The cause remains unresolved;
-the earlier 600-call pass did not establish sustained reliability.
+exhibited the stall, even with synchronous USB uploads. Later snapshots showed
+PCIe routing configuration disappearing on the GPU's upstream bridge while the
+USB bridge remained connected. The reset trigger remains unresolved; the earlier
+600-call pass did not establish sustained reliability.
+
+With USB transfer checks, full-model runs at the reported 132 W default failed on
+frames 73 and 311 with the same PCIe configuration loss. The runtime raised the
+USB timeout instead of returning stale output. A 90 W power-cap trial between
+those failures passed 600 frames at 4 Hz (220.86 ms median, 224.35 ms maximum).
+This short comparison suggests testing power delivery and clock/power transitions;
+it does not establish a reliable workaround. The default-power repeat's last
+telemetry sample was 110 W average board power, 67 C hotspot and 76 C memory;
+these samples do not capture instantaneous peaks. Power settings were restored
+after the capped trial.
+
+A separate 600-frame trial kept the 132 W cap and lowered the external PCIe link
+from Gen3 x2 to Gen2 x2. It passed at 210.53 ms median and 214.72 ms maximum, with
+routing retained. The original target speed was restored, renegotiating Gen3 x2.
+These passing trials lasted only 2.5 minutes each and do not establish sustained
+reliability. Neither power nor link-speed mitigation is enabled by default.
 
 Timings include two-camera preprocessing, USB input, encoder, history, backbone,
 actor and plan download, but exclude startup and concurrent openpilot operation.
