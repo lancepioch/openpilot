@@ -34,8 +34,9 @@ python -m openpilot.selfdrive.modeld.worldmodeld
 
 The tinygrad submodule includes native RDNA4 FP8 support and synchronous USB uploads.
 It checks USB transfer results and byte counts, rejects further submissions after
-a transfer error, and bounds USB completion waits. These checks prevent stale
-output and unlimited polling; they do not fix the observed PCIe configuration loss.
+a transfer error, bounds USB completion waits, and skips GPU teardown after a
+latched transfer failure. These checks prevent stale output and unlimited polling;
+they do not fix the observed PCIe configuration loss.
 The runtime uses LLVM, automatic GPU clocks, and
 `TC_OPT=2 TC_MIN_GLOBALS=32 JIT_BATCH_SIZE=0`. It needs a working USB AMD gfx1200 or
 gfx1201 GPU and an LLVM library with RDNA4 support.
