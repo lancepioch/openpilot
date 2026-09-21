@@ -44,11 +44,12 @@ The runtime uses LLVM, automatic GPU clocks, and
 `TC_OPT=2 TC_MIN_GLOBALS=32 JIT_BATCH_SIZE=0`. It needs a working USB AMD gfx1200 or
 gfx1201 GPU and an LLVM library with RDNA4 support.
 
-The planner defaults `AM_POWER_LIMIT` to 80 W before GPU initialization. The test
+The planner defaults `AM_POWER_LIMIT` to 100 W before GPU initialization. The test
 setup uses one 100 W, 12 V supply for both the GPU and bridge; default-power runs
-reported 109--110 W for the GPU alone. The cap leaves allowance for the bridge
-and supply headroom. An explicit `AM_POWER_LIMIT` setting overrides the default
-for a different power setup.
+reported 109--110 W for the GPU alone. With the 100 W cap, the highest sampled
+GPU board power was 90 W during the five-minute inference test. These samples
+do not measure bridge consumption or instantaneous supply peaks. An explicit
+`AM_POWER_LIMIT` setting overrides the default for a different power setup.
 
 ## Model and timing
 
@@ -70,7 +71,43 @@ History advances at 4 Hz, spanning 2.0 seconds instead of the trained 1.6 second
 at 5 Hz. Export metadata retains `fps: 5` to describe training. Quantization and
 this input-spacing change require recorded-clip evaluation before driving use.
 
-## Validation and known issue
+## Validation and known issues
+
+With the pinned tinygrad fixes, 1,200 inference calls at 100 W passed over five
+minutes at 4 Hz. After history warmup, all repeated-input plans matched their
+80 W references exactly. Median runtime was 211.78 ms, p95 213.19 ms, p99
+214.49 ms and maximum 217.75 ms; no inference exceeded the 250 ms budget.
+PCIe routing remained intact. Peak sampled GPU power was 90 W, hotspot 72 C
+and memory 84 C.
+
+A fresh process with no `AM_POWER_LIMIT` override confirmed the new 100 W
+firmware limit before model loading. Its subsequent 200-frame startup check
+passed with finite outputs, 210.06 ms median and 213.39 ms maximum, with PCIe
+routing retained.
+
+| GPU cap | Median | p95 | Maximum | Five-minute result |
+| --- | ---: | ---: | ---: | --- |
+| 90 W | 222.25 ms | 225.18 ms | 227.64 ms | Passed |
+| 100 W | 211.78 ms | 213.19 ms | 217.75 ms | Passed |
+| 110 W | 206.53 ms | 207.37 ms | 210.65 ms | Passed |
+
+These tests use automatic clocks and the original Gen3 x2 link. Timings include
+USB input, encoder, history, backbone, actor and plan download, but exclude
+camera preprocessing, startup and concurrent openpilot operation. At 100 W,
+the slowest measured inference leaves about 32 ms of the 250 ms period for
+other work. This supports the inference budget at 4 Hz; full-stack cadence and
+sustained driving reliability remain unvalidated.
+
+Higher-cap trials lost the GPU's upstream PCIe routing configuration while the
+USB bridge stayed connected. 111 W failed after 1,291 frames, 112 W after 1,769,
+and 116 W after 2,175; other tested settings above 112 W also failed. Short
+passes at 112 and 115 W did not survive repeats. The corrected runtime raises
+the USB timeout and exits instead of returning stale output or hanging forever.
+Normal device initialization restored routing without a replug. Power delivery
+is the leading reset hypothesis, but supply voltage droop has not been measured.
+100 W was selected before the longer 110 W test finished. No setting completed
+the planned thirty-minute endurance test, so the five-minute pass is not proof
+of long-duration stability.
 
 A strict repeated-input sweep exposed silent history corruption at 88, 89 and
 90 W with the previous tinygrad pin. At 88 W, 16 BF16 values in an older history
@@ -78,47 +115,9 @@ slot were copied from the next slot, and plans recovered when that frame aged
 out. The underlying shifted-assignment race reproduced at 80 W with a minimal
 kernel. The pinned tinygrad fix passes that GPU repro and 475 existing assignment,
 JIT and scheduling tests, plus lint and type checking. These numerical failures
-do not establish a power-limit boundary; the corrected power sweep is ongoing.
+do not establish a power-limit boundary. All completed comparisons in the
+corrected power sweep matched exactly before any transport failure.
 
-On the earlier runtime revision, 600 synthetic camera-to-plan calls at 4 Hz took
-200.93 ms median and 202.82 ms maximum. On this branch's newer tinygrad base,
-390 completed calls had a 207.32 ms median and 208.34 ms p95, with one 10.01-second
-pause before the run stalled in a USB/GPU copy-completion wait. A native trace showed the completion flag at zero
-while the host waited for one. Both persistent-buffer and standard input uploads
-exhibited the stall, even with synchronous USB uploads. Later snapshots showed
-PCIe routing configuration disappearing on the GPU's upstream bridge while the
-USB bridge remained connected. The reset trigger remains unresolved; the earlier
-600-call pass did not establish sustained reliability.
-
-With USB transfer checks, full-model runs at the reported 132 W default failed on
-frames 73 and 311 with the same PCIe configuration loss. The runtime raised the
-USB timeout instead of returning stale output. A 90 W power-cap trial between
-those failures passed 600 frames at 4 Hz (220.86 ms median, 224.35 ms maximum).
-This short comparison suggests testing power delivery and clock/power transitions;
-it does not establish a reliable workaround. The default-power repeat's last
-telemetry sample was 110 W average board power, 67 C hotspot and 76 C memory;
-these samples do not capture instantaneous peaks. Power settings were restored
-after the capped trial.
-
-A separate 600-frame trial kept the 132 W cap and lowered the external PCIe link
-from Gen3 x2 to Gen2 x2. It passed at 210.53 ms median and 214.72 ms maximum, with
-routing retained. The original target speed was restored, renegotiating Gen3 x2.
-These passing trials lasted only 2.5 minutes each and do not establish sustained
-reliability. Link speed is unchanged; the planner now defaults to an 80 W power
-cap following confirmation of the shared 100 W supply.
-
-At 80 W and the normal Gen3 x2 link, 1,200 frames passed over five minutes with
-PCIe routing intact: 244.05 ms median and 249.17 ms maximum. Every sampled
-inference-period board-power reading was 79 W; the highest sampled hotspot and
-memory temperatures were 69 C and 82 C. This leaves very little of the 250 ms
-budget for camera preprocessing and concurrent work, so full-stack 4 Hz remains
-unvalidated. The power budget mismatch is the leading reset hypothesis; supply
-voltage droop has not been measured independently.
-
-The earlier camera-to-plan timings include two-camera preprocessing, USB input,
-encoder, history, backbone, actor and plan download. Power and link-speed trials
-start with prepared synthetic images and exclude camera preprocessing. All these
-measurements exclude startup and concurrent openpilot operation.
 JIT replay matches eager execution, and ten saved plans match the earlier runtime
 bit-for-bit. Raw-plan error versus the original BF16 pipeline was 5.72% relative L2
 on that synthetic history; that is a diagnostic, not a driving-quality metric.
