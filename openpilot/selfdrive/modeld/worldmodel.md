@@ -5,10 +5,12 @@ on the USB RDNA4 GPU. The frozen backbone is
 `ff14e594-2315-4a7a-875a-541fd2e7c514/15360`; the image encoder is
 `c04337f8-b83f-4e34-b07a-5f7396978d67/-1`.
 
-The matching export is included under `models/worldmodel`: FP8 E4M3 matrix weights
-for the backbone and actor, INT8 matrix weights for the encoder, and higher-precision
-small parameters. Weights and encoder are stored in Git LFS. `hparams.json` records
-the checkpoint provenance and training input contract.
+The matching precompiled artifact is `models/worldmodel/model.pkl`, stored in
+Git LFS. It contains FP8 E4M3 matrix weights for the backbone and actor, the INT8
+encoder, higher-precision small parameters, and compiled programs. `hparams.json`
+records the checkpoint provenance and training input contract. The source weights
+and ONNX encoder are not required on the device.
+The PKL is 3,928,673,613 bytes (3.93 GB / 3.66 GiB).
 
 ## Setup
 
@@ -24,7 +26,7 @@ on the device's standard backend, supplying lanes, leads, metadata and odometry 
 20 Hz. Its plan remains the fallback during loading, history warmup, and whenever
 the worldmodel plan is invalid or stale.
 
-`WORLDMODEL_DIR=/absolute/path/to/export` selects another compatible export.
+`WORLDMODEL_DIR=/absolute/path/to/compiled-model` selects another compatible artifact directory.
 Set `WORLDMODEL_DIR=` in the manager environment to disable the worldmodel and use
 the standard model configuration. Run the planner alone with:
 
@@ -40,9 +42,12 @@ they do not fix the observed PCIe configuration loss.
 It also materializes shifted self-assignments before writing back, so the history
 update reads from a separate buffer. The earlier fused update could corrupt
 history when different GPU waves read and wrote overlapping frame ranges.
-The runtime uses LLVM, automatic GPU clocks, and
-`TC_OPT=2 TC_MIN_GLOBALS=32 JIT_BATCH_SIZE=0`. It needs a working USB AMD gfx1200 or
-gfx1201 GPU and an LLVM library with RDNA4 support.
+The runtime loads compiled GPU kernels and host submission code, including
+input/output copies, initial weight upload and history reset. The artifact
+contains both Linux ARM64 and x86-64 host binaries and targets the tested USB
+AMD gfx1200 GPU. Startup checks the GPU architecture; a different target needs
+its own offline build. The device does not build the model graph or invoke a
+native compiler. GPU clocks remain automatic.
 
 The planner defaults `AM_POWER_LIMIT` to 100 W before GPU initialization. The test
 setup uses one 100 W, 12 V supply for both the GPU and bridge; default-power runs
@@ -50,6 +55,26 @@ reported 109--110 W for the GPU alone. With the 100 W cap, the highest sampled
 GPU board power was 90 W during the five-minute inference test. These samples
 do not measure bridge consumption or instantaneous supply peaks. An explicit
 `AM_POWER_LIMIT` setting overrides the default for a different power setup.
+
+## Offline compilation
+
+Export the source bundle with xx's `ml_tools/openpilot_compile/compile_worldmodel.py`.
+On the build host, check out this branch and its pinned tinygrad submodule, connect
+the target USB GPU, and run from the openpilot root:
+
+```bash
+python -m openpilot.selfdrive.modeld.compile_worldmodel \
+  /absolute/path/to/context9-export \
+  openpilot/selfdrive/modeld/models/worldmodel/model.pkl
+```
+
+The build host needs Clang and LLVM with RDNA4 support. Compilation uses
+`TC_OPT=2 TC_MIN_GLOBALS=32 JIT_BATCH_SIZE=0` and also cross-compiles the host
+submission programs for ARM64. The output uses tinygrad's out-of-band pickle
+layout so weights can be uploaded in 32 MiB chunks with a precompiled copy
+program. A neighboring `model.reference.npz` contains synthetic inputs and
+reference plans for validation; it is not deployed. Rebuild the artifact when
+changing the model or its tinygrad revision.
 
 ## Model and timing
 
@@ -59,7 +84,7 @@ and trained actor. There is no noise prefix, image decoder, diffusion loop or
 cross-window KV cache. The final block computes only the last frame's outputs;
 all nine frames still contribute keys and values. Fused attention softmax and cached
 camera warp coordinates reduce overhead. The runtime uses the standard Tensor
-input upload path.
+input upload path, captured together with inference and plan download in the artifact.
 
 The publisher takes every fifth 20 Hz camera frame. Publisher cadence, service
 health checks, stale-plan expiry (500 ms), and action timing (125 ms half-period)
@@ -73,14 +98,30 @@ this input-spacing change require recorded-clip evaluation before driving use.
 
 ## Validation and known issues
 
-With the pinned tinygrad fixes, 1,200 inference calls at 100 W passed over five
+The precompiled artifact passed 1,200 frames at 4 Hz with exact reference matches,
+including a history reset midway through the run. Median inference was 209.60 ms
+and p95 211.22 ms. First-use kernel linking is performed during startup, before
+the camera loop begins. A fresh process using the installed PKL, with source
+weights and ONNX absent, took 13.73 seconds to upload and warm up on the test
+host. Its next 200 frames matched exactly at 209.37 ms median, 210.12 ms p95
+and 211.76 ms maximum, with no missed inference deadlines.
+
+Both runs disabled the compilation cache and replaced the compiler entry point
+with a function that raises on any call. No native compilation occurred; the
+installed-artifact check did not load LLVM or the ONNX/model-building modules.
+Peak host RSS in that check was approximately 138 MiB. ARM64 host binaries were
+cross-compiled and passed ELF target and relocation checks, but execution on the car's ARM
+host remains untested. These startup and inference timings were measured on the
+x86-64 build host with the USB GPU at 100 W.
+
+Before precompilation, 1,200 inference calls at 100 W passed over five
 minutes at 4 Hz. After history warmup, all repeated-input plans matched their
 80 W references exactly. Median runtime was 211.78 ms, p95 213.19 ms, p99
 214.49 ms and maximum 217.75 ms; no inference exceeded the 250 ms budget.
 PCIe routing remained intact. Peak sampled GPU power was 90 W, hotspot 72 C
 and memory 84 C.
 
-A fresh process with no `AM_POWER_LIMIT` override confirmed the new 100 W
+A fresh process with no `AM_POWER_LIMIT` override confirmed the 100 W
 firmware limit before model loading. Its subsequent 200-frame startup check
 passed with finite outputs, 210.06 ms median and 213.39 ms maximum, with PCIe
 routing retained.

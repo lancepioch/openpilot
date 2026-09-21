@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-import gc
-import json
 import os
 os.environ['GMMU'] = '0'
 os.environ.setdefault('AM_POWER_LIMIT', '100')
 import time
-from functools import lru_cache, partial
+import platform
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
-from tinygrad import Context, Device, Tensor, TinyJit, dtypes
-from tinygrad.nn.onnx import OnnxRunner
+from tinygrad import Context, Device, Tensor
 
 from openpilot.cereal import messaging
 from openpilot.cereal.services import SERVICE_LIST
@@ -20,97 +18,33 @@ from openpilot.common.swaglog import cloudlog
 from openpilot.common.transformations.camera import DEVICE_CAMERAS
 from openpilot.common.transformations.model import get_warp_matrix
 from openpilot.system.camerad.cameras.nv12_info import get_nv12_info
-from openpilot.selfdrive.modeld.worldmodel import WorldModel, load_weights
+from openpilot.selfdrive.modeld.worldmodel_pkl import load_worldmodel
 from openpilot.selfdrive.modeld.helpers import WORLDMODEL_DIR
 
 WORLD_MODEL_FREQ = SERVICE_LIST['worldModelPlan'].frequency
 CAMERA_FRAME_STRIDE = int(SERVICE_LIST['narrowRoadCameraState'].frequency / WORLD_MODEL_FREQ)
-LIVE_FRAMES = 5
 
 
 class WorldModelRunner:
-  def __init__(self, directory: Path, live_frames=LIVE_FRAMES):
-    hparams = json.loads((directory / 'hparams.json').read_text())
-    context9 = hparams.get('openpilot_export', {}).get('format') == 'context9_fp8'
-    if context9:
-      live_frames = hparams['openpilot_export']['live_frames']
-    assert 1 <= live_frames <= 10
-    self.live_frames = live_frames
+  def __init__(self, directory: Path):
     device = Device[Device.DEFAULT]
-    if device.arch not in ('gfx1200', 'gfx1201'):
-      raise RuntimeError(f'Worldmodel requires an RDNA4 GPU, got {device.arch}')
     if device.is_usb:
       device.iface.dev_impl.smu.set_clocks(level=None)
-    config = hparams['model']
-    self.model = WorldModel(config, load_weights(directory / 'weights.fp8.safetensors', None, True))
-    self.encoder = OnnxRunner(directory / 'encoder' / 'encoder.onnx')
-    weights = {n.inputs[1] for n in self.encoder.graph_nodes if n.op == 'MatMul' and n.inputs[1] in self.encoder.const_names}
-    for name in weights:
-      self.encoder.graph_values[name] = self.encoder.graph_values[name].cast(dtypes.float16)
-    self.encoder.onnx_ops = dict(self.encoder.onnx_ops)
-
-    def matmul(a, b):
-      b = b.cast(dtypes.float16)
-      if not context9:
-        b = b.contiguous().realize()
-      return a.cast(dtypes.float16).contiguous().realize().matmul(
-        b, dtype=dtypes.float32).realize()
-
-    self.encoder.onnx_ops['MatMul'] = matmul
-    for value in self.encoder.graph_values.values():
-      if isinstance(value, Tensor):
-        value.realize()
-    sample = Tensor.zeros(1, 6, 128, 256).contiguous().realize()
-    self.encoder({'imgs': sample})['latents'].realize()
-    del sample
-
-    self.prefix_frames = self.model.frames - live_frames
-    fidx = (np.arange(self.model.frames, dtype=np.int64)[None] if context9 else
-            np.array([[10, 11, 12, 13, 14, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]], dtype=np.int64))
-
-    def conditions(start, end, timestep):
-      return {
-        't': Tensor.full((1, end - start), timestep, dtype=dtypes.bfloat16).contiguous().realize(),
-        'augments_pos_ref_augment': Tensor.zeros(1, end - start, 3, dtype=dtypes.bfloat16).contiguous().realize(),
-        'ref_augment_from_augments_euler': Tensor.zeros(1, end - start, 3, dtype=dtypes.bfloat16).contiguous().realize(),
-        'pose_mask': Tensor.ones(1, end - start, dtype=dtypes.int64).contiguous().realize(),
-        'fidx': Tensor(fidx[:, start:end].copy()).realize(),
-      }
-
-    # Unobserved future and older context slots have fixed noise at t=1.
-    if self.prefix_frames:
-      self.model.setup_cache(1, self.prefix_frames)
-      rng = np.random.default_rng(0)
-      prefix = Tensor(rng.standard_normal((1, self.prefix_frames, 32, 16, 32), dtype=np.float32)).cast(dtypes.bfloat16).realize()
-      prefill = TinyJit(partial(self.model, **conditions(0, self.prefix_frames, 1), return_plan=False), prune=True)
-      prefill.cnt = 1
-      prefill(prefix)
-      device.synchronize()
-      del prefill, prefix
-      gc.collect()
-      device.allocator.free_cache()
-    self.forward = partial(self.model, start_frame=self.prefix_frames, **conditions(self.prefix_frames, self.model.frames, 0))
-    self.history = Tensor.zeros(1, live_frames, 32, 16, 32, dtype=dtypes.bfloat16).contiguous().realize()
-    self.jit = TinyJit(self._run, prune=True)
-    self.jit.cnt = 1
+    artifact = load_worldmodel(directory / 'model.pkl')
+    self.live_frames = artifact['live_frames']
+    programs = artifact['programs'][platform.machine().lower()]
+    self.jit, self.reset_jit = programs['run'], programs['reset']
     self.run(np.zeros((1, 6, 128, 256), dtype=np.uint8))
     self.reset()
 
-  def _run(self, images):
-    latent = self.encoder({'imgs': images.float() / 127.5 - 1.0})['latents']
-    latent = ((latent - self.model.config['compressor_mean']) / self.model.config['compressor_std']).cast(dtypes.bfloat16)
-    self.history.assign(self.history[:, 1:].cat(latent.unsqueeze(1), dim=1)).realize()
-    return self.forward(self.history)['plan'].float().realize()
-
   def reset(self):
-    self.history.assign(0).realize()
+    self.reset_jit()
 
   def run(self, images):
-    plan = self.jit(Tensor(images).realize()).numpy()
+    plan = self.jit(Tensor(images, device='NPY')).numpy()
     if not np.isfinite(plan).all():
       raise RuntimeError('Worldmodel plan is not finite')
     return plan
-
 
 @lru_cache(maxsize=8)
 def warp_indices(width, height, transform):
