@@ -35,8 +35,11 @@ python -m openpilot.selfdrive.modeld.worldmodeld
 The tinygrad submodule includes native RDNA4 FP8 support and synchronous USB uploads.
 It checks USB transfer results and byte counts, rejects submissions and waits on
 failed devices, bounds USB completion waits, and skips GPU teardown after a
-latched transfer failure. These checks prevent stale output and unlimited polling;
+latched transfer failure. These checks reject reported transfer failures and bound polling;
 they do not fix the observed PCIe configuration loss.
+It also materializes shifted self-assignments before writing back, so the history
+update reads from a separate buffer. The earlier fused update could corrupt
+history when different GPU waves read and wrote overlapping frame ranges.
 The runtime uses LLVM, automatic GPU clocks, and
 `TC_OPT=2 TC_MIN_GLOBALS=32 JIT_BATCH_SIZE=0`. It needs a working USB AMD gfx1200 or
 gfx1201 GPU and an LLVM library with RDNA4 support.
@@ -68,6 +71,14 @@ at 5 Hz. Export metadata retains `fps: 5` to describe training. Quantization and
 this input-spacing change require recorded-clip evaluation before driving use.
 
 ## Validation and known issue
+
+A strict repeated-input sweep exposed silent history corruption at 88, 89 and
+90 W with the previous tinygrad pin. At 88 W, 16 BF16 values in an older history
+slot were copied from the next slot, and plans recovered when that frame aged
+out. The underlying shifted-assignment race reproduced at 80 W with a minimal
+kernel. The pinned tinygrad fix passes that GPU repro and 475 existing assignment,
+JIT and scheduling tests, plus lint and type checking. These numerical failures
+do not establish a power-limit boundary; the corrected power sweep is ongoing.
 
 On the earlier runtime revision, 600 synthetic camera-to-plan calls at 4 Hz took
 200.93 ms median and 202.82 ms maximum. On this branch's newer tinygrad base,
