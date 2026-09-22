@@ -121,7 +121,6 @@ class TogglesLayoutMici(NavScroller):
     if ui_state.CP is not None:
       if ui_state.has_longitudinal_control:
         self._experimental_btn.set_visible(True)
-        self._experimental_btn.set_enabled(not ui_state.experimental_mode_forced)
         self._personality_toggle.set_visible(True)
       else:
         # no long for now
@@ -132,8 +131,7 @@ class TogglesLayoutMici(NavScroller):
 
     # Refresh toggles from params to mirror external changes
     for key, item in self._refresh_toggles:
-      state = ui_state.params.get_bool(key) or (key == "ExperimentalMode" and ui_state.experimental_mode_forced)
-      item.set_checked(state)
+      item.set_checked(ui_state.params.get_bool(key))
 
   def _on_experimental_mode(self, state: bool):
     if state and not ui_state.params.get_bool("ExperimentalModeConfirmed"):

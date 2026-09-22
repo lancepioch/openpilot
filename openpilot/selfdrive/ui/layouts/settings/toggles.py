@@ -169,7 +169,7 @@ class TogglesLayout(Widget):
 
     if ui_state.CP is not None:
       if ui_state.has_longitudinal_control:
-        self._toggles["ExperimentalMode"].action_item.set_enabled(not ui_state.experimental_mode_forced)
+        self._toggles["ExperimentalMode"].action_item.set_enabled(True)
         self._toggles["ExperimentalMode"].set_description(e2e_description)
         self._long_personality_setting.action_item.set_enabled(True)
       else:
@@ -193,13 +193,12 @@ class TogglesLayout(Widget):
     else:
       self._toggles["ExperimentalMode"].set_description(e2e_description)
 
+    self._update_experimental_mode_icon()
+
     # TODO: make a param control list item so we don't need to manage internal state as much here
     # refresh toggles from params to mirror external changes
     for param in self._toggle_defs:
-      state = self._params.get_bool(param) or (param == "ExperimentalMode" and ui_state.experimental_mode_forced)
-      self._toggles[param].action_item.set_state(state)
-
-    self._update_experimental_mode_icon()
+      self._toggles[param].action_item.set_state(self._params.get_bool(param))
 
     # these toggles need restart, block while engaged
     for toggle_def in self._toggle_defs:
