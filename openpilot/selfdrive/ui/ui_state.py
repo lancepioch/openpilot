@@ -126,6 +126,10 @@ class UIState:
   def engaged(self) -> bool:
     return self.started and self.sm["selfdriveState"].enabled
 
+  @property
+  def experimental_mode_forced(self) -> bool:
+    return self.CP is not None and self.CP.brand == "rivian" and self.has_longitudinal_control
+
   def is_onroad(self) -> bool:
     return self.started
 
@@ -245,7 +249,7 @@ class UIState:
     self.recording_audio = self.params.get_bool("RecordAudio") and self.started
     self.is_metric = self.params.get_bool("IsMetric")
     self.always_on_dm = self.params.get_bool("AlwaysOnDM")
-    self.experimental_mode = self.params.get_bool("ExperimentalMode")
+    self.experimental_mode = self.experimental_mode_forced or self.params.get_bool("ExperimentalMode")
     self.experimental_mode_confirmed = self.params.get_bool("ExperimentalModeConfirmed")
     if not self.chestnut_compiled:
       self.chestnut_compiled = chestnut_compiled()
