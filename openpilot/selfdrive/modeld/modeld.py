@@ -421,7 +421,7 @@ def main(demo=False):
       if world_sm is not None and world_sm.all_checks():
         world_plan = world_sm['worldModelPlan']
         plan_age = time.monotonic() - world_plan.timestampEof / 1e9
-        if 0 <= plan_age < 2 / SERVICE_LIST['worldModelPlan'].frequency:
+        if 0 <= plan_age < frame_delay + 2 / SERVICE_LIST['worldModelPlan'].frequency:
           plan_output = {'plan': np.array(world_plan.plan, dtype=np.float32)[None]}
           model.parser.parse_mdn('plan', plan_output, in_N=0, out_N=0, out_shape=(ModelConstants.IDX_N, ModelConstants.PLAN_WIDTH))
           model_output.update(plan_output)

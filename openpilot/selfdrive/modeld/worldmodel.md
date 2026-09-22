@@ -62,12 +62,14 @@ inference duration, and the 125 ms half-period. It publishes the conditioned
 and applies the existing output smoothing and stop logic. It retains plan-based
 action derivation for older artifacts without an action output.
 
-The publisher takes every fifth 20 Hz camera frame. Service health checks and
-stale-plan expiry (500 ms) use the 4 Hz service frequency. A camera gap over
-500 ms or a camera restart resets history; nine new observations are required
-for validity. `modeld` receives the latest worldmodel output after running the
-small model, so a plan arriving during that inference is available for the
-freshness check. The prediction time grid is unchanged.
+The publisher takes every fifth 20 Hz camera frame. Service health checks use
+the 4 Hz service frequency. Stale-plan expiry is 550 ms: the existing 50 ms
+camera-delivery budget plus two 250 ms periods for inference and holding the
+result until its replacement. A camera gap over 500 ms or a camera restart
+resets history; nine new observations are required for validity. `modeld`
+receives the latest worldmodel output after running the small model, so a plan
+arriving during that inference is available for the freshness check. The
+prediction time grid is unchanged.
 
 History advances at 4 Hz, spanning 2.0 seconds instead of the trained 1.6 seconds
 at 5 Hz. Export metadata retains `fps: 5` to describe training. Quantization,
@@ -114,8 +116,10 @@ and relocation checks. The message schema, learned-action parsing and control
 units passed a CPU integration check. Chestnut CI build 10 ran the precompiled
 ARM64 artifact with real cameras: 100 plans in 25 seconds, 228.63 ms median and
 229.51 ms maximum including image preprocessing, with no runtime compilation.
-It caught intermittent fallback in `modeld` from receiving plans before the
-small-model inference; the receive now occurs after that inference.
+Follow-up diagnostics measured 263.36 ms median capture-to-publication latency.
+The old 500 ms expiry caused fallback at about 509 ms, roughly 3 ms before the
+next healthy plan arrived. The freshness budget now includes camera delivery,
+and plan receipt occurs after small-model inference.
 
 A fresh process passed 1,200 frames over five minutes at 4 Hz, including a
 history reset. Every plan and action matched the compiler reference exactly.
@@ -149,7 +153,8 @@ completion waits, and rejects further work after failure. It also fixes shifted
 history assignment so overlapping GPU waves cannot overwrite data still being
 read. These fixes do not prevent hardware PCIe resets.
 
-Timing measurements use prepared images on the x86-64 host and exclude camera
-preprocessing and concurrent openpilot operation. Full-stack 4 Hz cadence,
-sustained reliability, and driving behavior remain unvalidated. Start with
-parked-car integration testing with controls disengaged.
+The x86-64 timing measurements use prepared images and exclude camera
+preprocessing and concurrent openpilot operation. Chestnut CI covers the real
+camera/model pipeline; sustained reliability, full onroad system load, and
+driving behavior still require validation. Start with parked-car integration
+testing with controls disengaged.
