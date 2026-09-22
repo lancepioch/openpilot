@@ -75,7 +75,7 @@ class WorldModel:
     if weight.dtype == dtypes.fp8e4m3:
       scale = (x.float().abs().max().clamp(min_=1e-12) / 448.0).realize()
       quantized = (x.float() / scale).clamp(-448, 448).cast(weight.dtype).realize()
-      if (x.ndim == 3 and x.shape[0] == 1 and x.shape[1] % 128 == 0 and name.startswith("blocks.") and
+      if (x.ndim == 3 and x.shape[0] == 1 and x.shape[1] % 128 == 0 and name.startswith(("blocks.", "plan_head.blocks.")) and
           getattr(Device[x.device], "arch", "") in {"gfx1200", "gfx1201"}):
         from openpilot.selfdrive.modeld.worldmodel_kernels import fp8_linear
 
@@ -139,13 +139,13 @@ class WorldModel:
     from tinygrad import Device, dtypes
 
     batch, seq, width = x.shape
-    heads = self.config["transformer"]["n_head"]
+    heads = self.config["plan_head" if name.startswith("plan_head.") else "transformer"]["n_head"]
     qkv = self.linear(x, name + ".c_attn").reshape(batch, seq, 3, heads, width // heads)
     q, k, v = (qkv[:, :, i] for i in range(3))
     q, k = self.norm(q, name + ".q_norm"), self.norm(k, name + ".k_norm")
     q, k, v = (a.transpose(1, 2) for a in (q, k, v))
     q, k, v = (a.contiguous().realize() for a in (q, k, v))
-    if self.kv_cache is not None:
+    if self.kv_cache is not None and not name.startswith("plan_head."):
       if start_frame == 0:
         self.kv_cache[layer, 0].assign(k.cast(dtypes.fp8e4m3)).realize()
         self.kv_cache[layer, 1].assign(v.cast(dtypes.fp8e4m3)).realize()
@@ -171,7 +171,7 @@ class WorldModel:
     return self.linear(y, name + ".c_proj")
 
   def __call__(self, x, t, augments_pos_ref_augment, ref_augment_from_augments_euler, pose_mask, fidx,
-               start_frame=0, return_plan=None):
+               start_frame=0, return_plan=None, action_t=None):
     from tinygrad import Tensor
 
     batch, frames, channels, height, width = x.shape
@@ -193,7 +193,7 @@ class WorldModel:
     t6.realize()
     for i in range(self.layers):
       name = f"blocks.{i}"
-      last_frame = self.kv_cache is None and i == self.layers - 1
+      last_frame = self.kv_cache is None and i == self.layers - 1 and not self.config.get("plan_head_transformer", False)
       shift_a, scale_a, gate_a, shift_m, scale_m, gate_m = (
         self.w[name + ".scale_shift_table"][:, start_frame:start_frame + frames] + t6.reshape(batch, frames, 6, -1)
       ).chunk(6, dim=2)
@@ -205,11 +205,31 @@ class WorldModel:
       x = (x + self.gate(self.mlp(self.modulate(self.norm(x), shift_m, scale_m), name + ".mlp"), gate_m)).realize()
     outputs = {}
     if (self.return_plan if return_plan is None else return_plan):
-      plan = x[:, -1].float()
-      for i in range(self.config["plan_head"]["n_layer"]):
-        name = f"plan_head.mlps.{i}"
-        plan = plan + self.mlp(self.norm(plan, name + ".layer_norm", layernorm=True), name)
-      outputs["plan"] = self.linear(plan, "plan_head.head") * self.w["plan_head.scale_layer.scale"]
+      if self.config.get("plan_head_transformer", False):
+        outputs = self.transformer_plan(x, action_t)
+      else:
+        plan = x[:, -1].float()
+        for i in range(self.config["plan_head"]["n_layer"]):
+          name = f"plan_head.mlps.{i}"
+          plan = plan + self.mlp(self.norm(plan, name + ".layer_norm", layernorm=True), name)
+        outputs["plan"] = self.linear(plan, "plan_head.head") * self.w["plan_head.scale_layer.scale"]
     if outputs:
       Tensor.realize(*outputs.values())
     return outputs
+
+  def transformer_plan(self, x, action_t):
+    config = self.config["plan_head"]
+    assert config["norm"] == "RMSNorm" and config["prenorm"] and config["qk_norm"]
+    assert config["attention_mask"] == "BLOCKWISE_LOWER_TRIANGLE" and config["attention_mask_mini_block_size"] == self.spatial
+    x = (x + self.linear(action_t.cast(x.dtype), "plan_head.action_t_encoder")[:, None]).realize()
+    for i in range(config["n_layer"]):
+      name = f"plan_head.blocks.{i}"
+      last_frame = i == config["n_layer"] - 1
+      attn = self.attention(self.norm(x, name + ".attn.layer_norm"), name + ".attn", i, 0, last_frame=last_frame)
+      if last_frame:
+        x = x[:, -self.spatial:]
+      x = (x + attn).realize()
+      x = (x + self.mlp(self.norm(x, name + ".mlp.layer_norm"), name + ".mlp")).realize()
+    x = x[:, -1].float()
+    return {"plan": self.linear(x, "plan_head.head") * self.w["plan_head.scale_layer.scale"],
+            "action": self.linear(x, "plan_head.action_head") * self.w["plan_head.action_scale.scale"]}

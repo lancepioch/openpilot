@@ -14,12 +14,15 @@ from openpilot.cereal import messaging
 from openpilot.cereal.services import SERVICE_LIST
 from openpilot.cereal.visionipc import VisionStreamType
 from msgq.visionipc import VisionIpcClient
+from opendbc.car.structs import car
+from openpilot.common.params import Params
 from openpilot.common.swaglog import cloudlog
 from openpilot.common.transformations.camera import DEVICE_CAMERAS
 from openpilot.common.transformations.model import get_warp_matrix
 from openpilot.system.camerad.cameras.nv12_info import get_nv12_info
 from openpilot.selfdrive.modeld.worldmodel_pkl import load_worldmodel
 from openpilot.selfdrive.modeld.helpers import WORLDMODEL_DIR
+from openpilot.selfdrive.modeld.constants import LAT_SMOOTH_SECONDS, LONG_SMOOTH_SECONDS
 
 WORLD_MODEL_FREQ = SERVICE_LIST['worldModelPlan'].frequency
 CAMERA_FRAME_STRIDE = int(SERVICE_LIST['narrowRoadCameraState'].frequency / WORLD_MODEL_FREQ)
@@ -32,19 +35,27 @@ class WorldModelRunner:
       device.iface.dev_impl.smu.set_clocks(level=None)
     artifact = load_worldmodel(directory / 'model.pkl')
     self.live_frames = artifact['live_frames']
+    self.input_names = artifact.get('inputs', ('images',))
     programs = artifact['programs'][platform.machine().lower()]
     self.jit, self.reset_jit = programs['run'], programs['reset']
-    self.run(np.zeros((1, 6, 128, 256), dtype=np.uint8))
+    self.run(np.zeros((1, 6, 128, 256), dtype=np.uint8), np.full((1, 2), .5, dtype=np.float32))
     self.reset()
+    self.execution_time = 1 / WORLD_MODEL_FREQ
 
   def reset(self):
     self.reset_jit()
 
-  def run(self, images):
-    plan = self.jit(Tensor(images, device='NPY')).numpy()
-    if not np.isfinite(plan).all():
-      raise RuntimeError('Worldmodel plan is not finite')
-    return plan
+  def run(self, images, action_t):
+    start = time.monotonic()
+    inputs = {'images': images, 'action_t': action_t}
+    outputs = self.jit(*(Tensor(inputs[name], device='NPY') for name in self.input_names))
+    if isinstance(outputs, Tensor):
+      outputs = {'plan': outputs}
+    outputs = {name: value.numpy() for name, value in outputs.items()}
+    if not all(np.isfinite(value).all() for value in outputs.values()):
+      raise RuntimeError('Worldmodel output is not finite')
+    self.execution_time = time.monotonic() - start
+    return outputs
 
 @lru_cache(maxsize=8)
 def warp_indices(width, height, transform):
@@ -75,7 +86,9 @@ def main():
   with Context(DEV='USB+AMD:LLVM', TC_OPT=2, TC_MIN_GLOBALS=32, JIT_BATCH_SIZE=0):
     runner = WorldModelRunner(directory)
     pm = messaging.PubMaster(['worldModelPlan'])
-    sm = messaging.SubMaster(['deviceState', 'narrowRoadCameraState', 'extrinsicsCalibration'])
+    sm = messaging.SubMaster(['deviceState', 'narrowRoadCameraState', 'extrinsicsCalibration', 'lateralDelay'])
+    CP = messaging.log_from_bytes(Params().get('CarParams', block=True), car.CarParams)
+    long_delay = CP.longitudinalActuatorDelay + LONG_SMOOTH_SECONDS
     cameras = [VisionIpcClient('camerad', stream, True) for stream in
                (VisionStreamType.VISION_STREAM_NARROW_ROAD, VisionStreamType.VISION_STREAM_WIDE_ROAD)]
     for camera in cameras:
@@ -111,14 +124,18 @@ def main():
       start = time.monotonic()
       images = np.concatenate([prepare_image(buf, camera.width, camera.height, tfm)
                                for buf, camera, tfm in zip((narrow, wide), cameras, transforms, strict=True)], axis=0)[None]
-      plan = runner.run(images)
+      delay = time.monotonic() - timestamp / 1e9 + runner.execution_time + .5 / WORLD_MODEL_FREQ
+      action_t = np.array([[sm['lateralDelay'].lateralDelay + LAT_SMOOTH_SECONDS + delay, long_delay + delay]], dtype=np.float32)
+      outputs = runner.run(images, action_t)
       history_frames += 1
       msg = messaging.new_message('worldModelPlan')
       msg.valid = history_frames >= runner.live_frames
       msg.worldModelPlan.frameId = cameras[0].frame_id
       msg.worldModelPlan.timestampEof = timestamp
       msg.worldModelPlan.modelExecutionTime = time.monotonic() - start
-      msg.worldModelPlan.plan = plan.ravel().tolist()
+      msg.worldModelPlan.plan = outputs['plan'].ravel().tolist()
+      msg.worldModelPlan.action = outputs.get('action', np.empty(0)).ravel().tolist()
+      msg.worldModelPlan.actionT = action_t.ravel().tolist()
       pm.send('worldModelPlan', msg)
 
 

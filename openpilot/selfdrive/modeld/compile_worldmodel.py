@@ -88,17 +88,18 @@ class WorldModelBuilder:
     self.history = Tensor.zeros(1, live_frames, 32, 16, 32, dtype=dtypes.bfloat16).contiguous().realize()
     self.jit = TinyJit(self._run, prune=True)
     self.jit.cnt = 1
-    self.run(np.zeros((1, 6, 128, 256), dtype=np.uint8))
+    self.run(np.zeros((1, 6, 128, 256), dtype=np.uint8), np.full((1, 2), .5, dtype=np.float32))
     self.reset_jit = TinyJit(self._reset)
     self.reset_jit.cnt = 1
     self.reset()
 
-  def _run(self, images):
+  def _run(self, images, action_t):
     images = images.to(Device.DEFAULT)
+    action_t = action_t.to(Device.DEFAULT)
     latent = self.encoder({'imgs': images.float() / 127.5 - 1.0})['latents']
     latent = ((latent - self.model.config['compressor_mean']) / self.model.config['compressor_std']).cast(dtypes.bfloat16)
     self.history.assign(self.history[:, 1:].cat(latent.unsqueeze(1), dim=1)).realize()
-    return self.forward(self.history)['plan'].float().to('NPY').realize()
+    return {name: value.float().to('NPY').realize() for name, value in self.forward(self.history, action_t=action_t).items()}
 
   def _reset(self):
     self.history.assign(0).realize()
@@ -106,11 +107,12 @@ class WorldModelBuilder:
   def reset(self):
     self.reset_jit()
 
-  def run(self, images):
-    plan = self.jit(Tensor(images, device='NPY')).numpy()
-    if not np.isfinite(plan).all():
-      raise RuntimeError('Worldmodel plan is not finite')
-    return plan
+  def run(self, images, action_t):
+    outputs = self.jit(Tensor(images, device='NPY'), Tensor(action_t, device='NPY'))
+    outputs = {name: value.numpy() for name, value in outputs.items()}
+    if not all(np.isfinite(value).all() for value in outputs.values()):
+      raise RuntimeError('Worldmodel output is not finite')
+    return outputs
 
 
 def host_programs(jits, arch):
@@ -126,9 +128,10 @@ def compile_model(directory: Path, output: Path):
   start = time.monotonic()
   runner = WorldModelBuilder(directory)
   inputs = np.random.default_rng(22).integers(0, 256, (32, 1, 6, 128, 256), dtype=np.uint8)
+  action_t = np.random.default_rng(23).uniform(.3, .9, (32, 1, 2)).astype(np.float32)
   reference = []
-  for image in inputs:
-    reference.append(runner.run(image).copy())
+  for index in range(64):
+    reference.append({name: value.copy() for name, value in runner.run(inputs[index % 32], action_t[index % 32]).items()})
   runner.reset()
 
   @TinyJit
@@ -144,6 +147,7 @@ def compile_model(directory: Path, output: Path):
   artifact = {
     'arch': Device[Device.DEFAULT].arch,
     'live_frames': runner.live_frames,
+    'inputs': ('images', 'action_t'),
     'programs': {host: host_programs(jits, arch) for host, arch in
                  (('x86_64', 'x86_64,x86-64'), ('aarch64', 'arm64,generic'))},
     'metadata': json.loads((directory / 'hparams.json').read_text())['openpilot_export'],
@@ -152,7 +156,8 @@ def compile_model(directory: Path, output: Path):
   temporary = output.with_suffix(output.suffix + '.tmp')
   dump_pickle(artifact, temporary)
   temporary.replace(output)
-  np.savez(output.with_suffix('.reference.npz'), inputs=inputs, plans=np.stack(reference))
+  np.savez(output.with_suffix('.reference.npz'), inputs=inputs, action_t=action_t,
+           **{name: np.stack([r[name] for r in reference]) for name in reference[0]})
   print(f'Compiled {output}: {output.stat().st_size:,} bytes in {time.monotonic() - start:.2f} s', flush=True)
 
 

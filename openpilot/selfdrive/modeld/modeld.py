@@ -35,14 +35,12 @@ from openpilot.selfdrive.controls.lib.desire_helper import DesireHelper
 from openpilot.selfdrive.controls.lib.drive_helpers import get_accel_from_plan, should_stop, smooth_value, get_curvature_from_plan
 from openpilot.selfdrive.modeld.parse_model_outputs import Parser
 from openpilot.selfdrive.modeld.fill_model_msg import fill_model_msg, fill_driving_model_data, fill_pose_msg, PublishState
-from openpilot.selfdrive.modeld.constants import ModelConstants, Plan
+from openpilot.selfdrive.modeld.constants import ModelConstants, Plan, LAT_SMOOTH_SECONDS, LONG_SMOOTH_SECONDS
 from openpilot.selfdrive.modeld.helpers import MODELS_DIR, WORLDMODEL_DIR, chestnut_present, chestnut_compiled, modeld_pkl_path, load_oob
 
 SEND_RAW_PRED = os.getenv('SEND_RAW_PRED')
 WORLD_MODEL = bool(WORLDMODEL_DIR)
 
-LAT_SMOOTH_SECONDS = 0.0
-LONG_SMOOTH_SECONDS = 0.3
 MIN_LAT_CONTROL_SPEED = 0.3
 BIG_MODEL_TIMEOUT = 60
 
@@ -426,6 +424,10 @@ def main(demo=False):
           model.parser.parse_mdn('plan', plan_output, in_N=0, out_N=0, out_shape=(ModelConstants.IDX_N, ModelConstants.PLAN_WIDTH))
           model_output.update(plan_output)
           model_output.pop('action', None)
+          if len(world_plan.action):
+            action_output = {'action': np.array(world_plan.action, dtype=np.float32)[None]}
+            model.parser.parse_mdn('action', action_output, in_N=0, out_N=0, out_shape=(2,))
+            model_output.update(action_output)
           action_delay = .5 / SERVICE_LIST['worldModelPlan'].frequency
           lat_action_t = lat_delay + plan_age + action_delay
           long_action_t = long_delay + plan_age + action_delay
