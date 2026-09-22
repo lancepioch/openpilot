@@ -1,5 +1,6 @@
 from enum import IntEnum
 import pyray as rl
+import raylib
 import numpy as np
 from openpilot.system.ui.lib.application import gui_app, FontWeight, MousePos, MouseEvent
 from openpilot.system.ui.lib.text_measure import measure_text_cached
@@ -20,6 +21,10 @@ KEY_MIN_ANIMATION_TIME = 0.075  # s
 
 DEBUG = False
 ANIMATION_SCALE = 0.65
+
+# The bundled AGNOS updater runs before the OS (and raylib) is updated.
+# Raylib 6 replaced the separate x/y arguments with a Vector2.
+_GRADIENT_USES_VECTOR = len(raylib.ffi.typeof(raylib.DrawCircleGradient).args) == 4
 
 
 def zip_repeat(a, b):
@@ -353,8 +358,13 @@ class MiciKeyboard(Widget):
 
           # draw black circle behind selected key
           circle_alpha = int(self._selected_key_filter.x * 225)
-          rl.draw_circle_gradient(rl.Vector2(key_x + key.rect.width / 2, key_y + key.rect.height / 2),
-                                  SELECTED_CHAR_FONT_SIZE, rl.Color(0, 0, 0, circle_alpha), rl.BLANK)
+          center_x, center_y = key_x + key.rect.width / 2, key_y + key.rect.height / 2
+          if _GRADIENT_USES_VECTOR:
+            rl.draw_circle_gradient(rl.Vector2(center_x, center_y),
+                                    SELECTED_CHAR_FONT_SIZE, rl.Color(0, 0, 0, circle_alpha), rl.BLANK)
+          else:
+            rl.draw_circle_gradient(int(center_x), int(center_y),
+                                    SELECTED_CHAR_FONT_SIZE, rl.Color(0, 0, 0, circle_alpha), rl.BLANK)
         else:
           # move other keys away from selected key a bit
           dx = key.original_position.x - self._closest_key[0].original_position.x
