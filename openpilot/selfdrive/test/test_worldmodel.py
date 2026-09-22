@@ -77,6 +77,7 @@ class TestWorldModelOnroad(OpenpilotTestCase):
     times = [m.worldModelPlan.modelExecutionTime for m in plans]
     ages = [(m.logMonoTime - m.worldModelPlan.timestampEof) / 1e9 for m in plans]
     print(f"worldmodel: {len(plans)} frames, median {np.median(times)*1000:.2f} ms, max {max(times)*1000:.2f} ms")
+    print(f"worldmodel capture-to-publish: median {np.median(ages)*1000:.2f} ms, max {max(ages)*1000:.2f} ms")
     assert max(times) < period, f"Worldmodel exceeded {period}s inference budget: {max(times)}"
     assert all(0 <= age < 2 * period for age in ages), f"Worldmodel published stale plans: {max(ages)}"
     for m in plans:
@@ -84,6 +85,16 @@ class TestWorldModelOnroad(OpenpilotTestCase):
       assert (len(plan.plan), len(plan.action), len(plan.actionT)) == (990, 4, 2)
       assert np.isfinite([*plan.plan, *plan.action, *plan.actionT]).all()
     fallback_frames = [m.modelV2.frameId for m in msgs['modelV2'] if not m.modelV2.big]
+    if fallback_frames:
+      publication_times = [m.logMonoTime for m in plans]
+      samples = []
+      for m in msgs['modelV2']:
+        index = np.searchsorted(publication_times, m.logMonoTime, side='right') - 1
+        if not m.modelV2.big and 0 <= index < len(plans) - 1:
+          age_ms = (m.logMonoTime - plans[index].worldModelPlan.timestampEof) / 1e6
+          until_next_ms = (publication_times[index + 1] - m.logMonoTime) / 1e6
+          samples.append((m.modelV2.frameId, round(age_ms, 2), round(until_next_ms, 2)))
+      print(f"fallback (frame, latest plan age ms, next plan in ms): {samples[:10]}")
     assert not fallback_frames, f"Modeld fell back instead of using worldmodel plans on frames: {fallback_frames}"
     assert all(np.isfinite(m.modelV2.position.x).all() for m in msgs['modelV2'])
 
