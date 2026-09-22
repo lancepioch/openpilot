@@ -98,6 +98,15 @@ reference file is not deployed. Rebuild when changing the model or tinygrad.
 
 ## Validation and hardware limits
 
+Chestnut CI runs the existing stock-model replay and camera tests with
+`WORLDMODEL_DIR=`. It then explicitly enables the worldmodel for
+`openpilot/selfdrive/test/test_worldmodel.py` on the same MICI GPU device.
+That test starts `worldmodeld` with the real cameras and ordinary model,
+waits for valid worldmodel output to be consumed by `modeld`, and checks
+25 seconds of 4 Hz plans, finite plan/action values, freshness, inference
+deadlines, and continued worldmodel use. Any worldmodel compiler call fails
+the test. Non-Chestnut jobs disable the worldmodel and skip its LFS download.
+
 The artifact compiled in 163.72 seconds. Both host targets passed ELF machine
 and relocation checks. The message schema, learned-action parsing and control
 units passed a CPU integration check. ARM64 execution on the car remains
