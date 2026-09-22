@@ -65,7 +65,9 @@ action derivation for older artifacts without an action output.
 The publisher takes every fifth 20 Hz camera frame. Service health checks and
 stale-plan expiry (500 ms) use the 4 Hz service frequency. A camera gap over
 500 ms or a camera restart resets history; nine new observations are required
-for validity. The prediction time grid is unchanged.
+for validity. `modeld` receives the latest worldmodel output after running the
+small model, so a plan arriving during that inference is available for the
+freshness check. The prediction time grid is unchanged.
 
 History advances at 4 Hz, spanning 2.0 seconds instead of the trained 1.6 seconds
 at 5 Hz. Export metadata retains `fps: 5` to describe training. Quantization,
@@ -109,8 +111,11 @@ the test. Non-Chestnut jobs disable the worldmodel and skip its LFS download.
 
 The artifact compiled in 163.72 seconds. Both host targets passed ELF machine
 and relocation checks. The message schema, learned-action parsing and control
-units passed a CPU integration check. ARM64 execution on the car remains
-untested.
+units passed a CPU integration check. Chestnut CI build 10 ran the precompiled
+ARM64 artifact with real cameras: 100 plans in 25 seconds, 228.63 ms median and
+229.51 ms maximum including image preprocessing, with no runtime compilation.
+It caught intermittent fallback in `modeld` from receiving plans before the
+small-model inference; the receive now occurs after that inference.
 
 A fresh process passed 1,200 frames over five minutes at 4 Hz, including a
 history reset. Every plan and action matched the compiler reference exactly.

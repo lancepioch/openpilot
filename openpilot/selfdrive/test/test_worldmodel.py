@@ -83,7 +83,8 @@ class TestWorldModelOnroad(OpenpilotTestCase):
       plan = m.worldModelPlan
       assert (len(plan.plan), len(plan.action), len(plan.actionT)) == (990, 4, 2)
       assert np.isfinite([*plan.plan, *plan.action, *plan.actionT]).all()
-    assert all(m.modelV2.big for m in msgs['modelV2']), "Modeld fell back instead of using worldmodel plans"
+    fallback_frames = [m.modelV2.frameId for m in msgs['modelV2'] if not m.modelV2.big]
+    assert not fallback_frames, f"Modeld fell back instead of using worldmodel plans on frames: {fallback_frames}"
     assert all(np.isfinite(m.modelV2.position.x).all() for m in msgs['modelV2'])
 
 

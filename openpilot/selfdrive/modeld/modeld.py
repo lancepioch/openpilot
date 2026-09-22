@@ -284,8 +284,8 @@ def main(demo=False):
   # messaging
   pub_socks = ["modelV2", "drivingModelData", "cameraOdometry"] + (["chestnutGpuState"] if CHESTNUT else [])
   pm = PubMaster(pub_socks)
-  sm = SubMaster(["deviceState", "carState", "narrowRoadCameraState", "extrinsicsCalibration", "driverMonitoringState", "carControl", "lateralDelay"] +
-                (["worldModelPlan"] if WORLD_MODEL else []))
+  sm = SubMaster(["deviceState", "carState", "narrowRoadCameraState", "extrinsicsCalibration", "driverMonitoringState", "carControl", "lateralDelay"])
+  world_sm = SubMaster(['worldModelPlan'], frequency=ModelConstants.MODEL_RUN_FREQ) if WORLD_MODEL else None
 
   publish_state = PublishState()
   params = Params()
@@ -416,8 +416,10 @@ def main(demo=False):
 
     if model_output is not None:
       worldmodel_active = False
-      if WORLD_MODEL and sm.all_checks(['worldModelPlan']):
-        world_plan = sm['worldModelPlan']
+      if world_sm is not None:
+        world_sm.update(0)
+      if world_sm is not None and world_sm.all_checks():
+        world_plan = world_sm['worldModelPlan']
         plan_age = time.monotonic() - world_plan.timestampEof / 1e9
         if 0 <= plan_age < 2 / SERVICE_LIST['worldModelPlan'].frequency:
           plan_output = {'plan': np.array(world_plan.plan, dtype=np.float32)[None]}
